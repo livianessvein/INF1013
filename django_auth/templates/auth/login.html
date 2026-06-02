@@ -1,0 +1,44 @@
+{% extends 'base.html' %}
+{% block title %}Login{% endblock %}
+
+{% block content %}
+<div class="card">
+    <div class="card-header">
+        <div class="logo">🔐</div>
+        <h1>Entrar</h1>
+        <p>Acesse sua conta</p>
+    </div>
+
+    <form method="post" novalidate>
+        {% csrf_token %}
+
+        {% if form.non_field_errors %}
+            <div class="form-error global-error">
+                {% for error in form.non_field_errors %}{{ error }}{% endfor %}
+            </div>
+        {% endif %}
+
+        <div class="form-group">
+            <label for="{{ form.email.id_for_label }}">{{ form.email.label }}</label>
+            {{ form.email }}
+            {% if form.email.errors %}
+                <span class="form-error">{{ form.email.errors.0 }}</span>
+            {% endif %}
+        </div>
+
+        <div class="form-group">
+            <label for="{{ form.senha.id_for_label }}">{{ form.senha.label }}</label>
+            {{ form.senha }}
+            {% if form.senha.errors %}
+                <span class="form-error">{{ form.senha.errors.0 }}</span>
+            {% endif %}
+        </div>
+
+        <button type="submit" class="btn btn-primary">Entrar</button>
+    </form>
+
+    <div class="card-footer">
+        <p>Não tem conta? <a href="{% url 'cadastro' %}">Cadastre-se</a></p>
+    </div>
+</div>
+{% endblock %}

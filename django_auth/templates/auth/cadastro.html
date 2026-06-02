@@ -1,0 +1,60 @@
+{% extends 'base.html' %}
+{% block title %}Cadastro{% endblock %}
+
+{% block content %}
+<div class="card">
+    <div class="card-header">
+        <div class="logo">👤</div>
+        <h1>Criar conta</h1>
+        <p>Preencha os dados abaixo</p>
+    </div>
+
+    <form method="post" novalidate>
+        {% csrf_token %}
+
+        {% if form.non_field_errors %}
+            <div class="form-error global-error">
+                {% for error in form.non_field_errors %}{{ error }}{% endfor %}
+            </div>
+        {% endif %}
+
+        <div class="form-group">
+            <label for="{{ form.nome.id_for_label }}">{{ form.nome.label }}</label>
+            {{ form.nome }}
+            {% if form.nome.errors %}
+                <span class="form-error">{{ form.nome.errors.0 }}</span>
+            {% endif %}
+        </div>
+
+        <div class="form-group">
+            <label for="{{ form.email.id_for_label }}">{{ form.email.label }}</label>
+            {{ form.email }}
+            {% if form.email.errors %}
+                <span class="form-error">{{ form.email.errors.0 }}</span>
+            {% endif %}
+        </div>
+
+        <div class="form-group">
+            <label for="{{ form.senha.id_for_label }}">{{ form.senha.label }}</label>
+            {{ form.senha }}
+            {% if form.senha.errors %}
+                <span class="form-error">{{ form.senha.errors.0 }}</span>
+            {% endif %}
+        </div>
+
+        <div class="form-group">
+            <label for="{{ form.confirmar_senha.id_for_label }}">{{ form.confirmar_senha.label }}</label>
+            {{ form.confirmar_senha }}
+            {% if form.confirmar_senha.errors %}
+                <span class="form-error">{{ form.confirmar_senha.errors.0 }}</span>
+            {% endif %}
+        </div>
+
+        <button type="submit" class="btn btn-primary">Criar conta</button>
+    </form>
+
+    <div class="card-footer">
+        <p>Já tem conta? <a href="{% url 'login' %}">Entrar</a></p>
+    </div>
+</div>
+{% endblock %}

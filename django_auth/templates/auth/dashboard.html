@@ -1,0 +1,33 @@
+{% extends 'base.html' %}
+{% block title %}Dashboard{% endblock %}
+
+{% block content %}
+<div class="card dashboard-card">
+    <div class="card-header">
+        <div class="logo">✅</div>
+        <h1>Olá, {{ usuario.nome }}!</h1>
+        <p>Você está logado com sucesso</p>
+    </div>
+
+    <div class="user-info">
+        <div class="info-row">
+            <span class="info-label">ID</span>
+            <span class="info-value">#{{ usuario.id }}</span>
+        </div>
+        <div class="info-row">
+            <span class="info-label">Nome</span>
+            <span class="info-value">{{ usuario.nome }}</span>
+        </div>
+        <div class="info-row">
+            <span class="info-label">E-mail</span>
+            <span class="info-value">{{ usuario.email }}</span>
+        </div>
+        <div class="info-row">
+            <span class="info-label">Membro desde</span>
+            <span class="info-value">{{ usuario.data_cadastro|date:"d/m/Y \à\s H:i" }}</span>
+        </div>
+    </div>
+
+    <a href="{% url 'logout' %}" class="btn btn-outline">Sair da conta</a>
+</div>
+{% endblock %}

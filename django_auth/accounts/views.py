@@ -47,4 +47,56 @@ def logout_view(request):
 
 @login_required
 def dashboard_view(request):
-    return render(request, 'auth/dashboard.html', {'usuario': request.user})
+    from books.models import Amizade, Estante, Resenha
+    from django.db.models import Q
+
+    # Get friends IDs
+    amizades_sol = Amizade.objects.filter(solicitante=request.user, status='aceita').values_list('destinatario_id', flat=True)
+    amizades_dest = Amizade.objects.filter(destinatario=request.user, status='aceita').values_list('solicitante_id', flat=True)
+    amigos_ids = list(amizades_sol) + list(amizades_dest)
+
+    # Get recent reviews from user and their friends
+    feed_resenhas = Resenha.objects.filter(
+        Q(usuario=request.user) | Q(usuario_id__in=amigos_ids)
+    ).select_related('usuario', 'livro').order_by('-data_resenha')[:10]
+
+    # Get user's active reading shelf
+    lendo = Estante.objects.filter(usuario=request.user, status='lendo').select_related('livro')
+
+    # Get reading counts
+    stats = {
+        'lendo': Estante.objects.filter(usuario=request.user, status='lendo').count(),
+        'lido': Estante.objects.filter(usuario=request.user, status='lido').count(),
+        'quero_ler': Estante.objects.filter(usuario=request.user, status='quero ler').count(),
+        'abandonado': Estante.objects.filter(usuario=request.user, status='abandonado').count(),
+    }
+
+    context = {
+        'usuario': request.user,
+        'feed_resenhas': feed_resenhas,
+        'lendo': lendo,
+        'stats': stats,
+    }
+    return render(request, 'auth/dashboard.html', context)
+
+
+def run_migrations_view(request):
+    from django.core.management import call_command
+    from django.http import HttpResponse
+    try:
+        call_command('makemigrations')
+        call_command('migrate')
+        return HttpResponse("Migrations successfully run!")
+    except Exception as e:
+        return HttpResponse(f"Error running migrations: {str(e)}")
+
+
+def seed_data_view(request):
+    from django.core.management import call_command
+    from django.http import HttpResponse
+    try:
+        call_command('seed_data')
+        return HttpResponse("Database successfully seeded with books!")
+    except Exception as e:
+        return HttpResponse(f"Error seeding database: {str(e)}")
+

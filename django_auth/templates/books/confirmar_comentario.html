@@ -1,0 +1,31 @@
+{% extends 'base.html' %}
+
+{% block title %}Repetir Comentário - Skoob{% endblock %}
+
+{% block content %}
+<div class="glass-card confirmation-card">
+    <div class="card-header">
+        <span class="material-icons-round alert-warning-icon">help_outline</span>
+        <h2>Publicar Novamente?</h2>
+        <p>Você acabou de enviar um comentário idêntico para esta resenha em sequência.</p>
+    </div>
+
+    <div class="confirmation-details">
+        <p>Tem certeza de que deseja publicar este comentário novamente?</p>
+        <blockquote class="comment-quote">
+            "{{ texto }}"
+        </blockquote>
+    </div>
+
+    <form action="{% url 'books:comentar_resenha' resenha.id_resenha %}" method="POST" class="confirmation-form">
+        {% csrf_token %}
+        <input type="hidden" name="texto" value="{{ texto }}">
+        <input type="hidden" name="confirmado" value="1">
+        
+        <div class="confirmation-actions">
+            <button type="submit" class="btn btn-primary">Sim, Publicar de novo</button>
+            <a href="{% url 'books:detalhe_livro' resenha.livro.id_livro %}" class="btn btn-outline">Cancelar</a>
+        </div>
+    </form>
+</div>
+{% endblock %}

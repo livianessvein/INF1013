@@ -3,20 +3,83 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>{% block title %}Sistema{% endblock %}</title>
+    <title>{% block title %}Skoob{% endblock %}</title>
     {% load static %}
+    <!-- Google Fonts & Material Icons -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/icon?family=Material+Icons+Round" rel="stylesheet">
     <link rel="stylesheet" href="{% static 'css/style.css' %}">
+    {% block extra_head %}{% endblock %}
 </head>
-<body>
-    <div class="container">
-        {% if messages %}
-            <div class="messages">
-                {% for message in messages %}
-                    <div class="alert alert-{{ message.tags }}">{{ message }}</div>
-                {% endfor %}
-            </div>
-        {% endif %}
-        {% block content %}{% endblock %}
-    </div>
+<body class="{% if not user.is_authenticated %}auth-body{% endif %}">
+
+    {% if user.is_authenticated %}
+    <!-- Header/Navbar -->
+    <header class="app-header">
+        <div class="header-container">
+            <a href="{% url 'dashboard' %}" class="app-brand">
+                <span class="material-icons-round brand-icon">menu_book</span>
+                <span class="brand-text">Skoob</span>
+            </a>
+            
+            <form action="{% url 'books:lista_livros' %}" method="GET" class="search-form">
+                <span class="material-icons-round search-icon">search</span>
+                <input type="text" name="q" placeholder="Buscar livros, autores, ISBN..." value="{{ query|default:'' }}">
+            </form>
+            
+            <nav class="app-nav">
+                <a href="{% url 'dashboard' %}" class="nav-link {% if request.resolver_match.url_name == 'dashboard' %}active{% endif %}">
+                    <span class="material-icons-round">dynamic_feed</span>
+                    <span class="nav-text">Feed</span>
+                </a>
+                <a href="{% url 'books:lista_livros' %}" class="nav-link {% if request.resolver_match.url_name == 'lista_livros' %}active{% endif %}">
+                    <span class="material-icons-round">explore</span>
+                    <span class="nav-text">Livros</span>
+                </a>
+                <a href="{% url 'books:lista_amigos' %}" class="nav-link {% if request.resolver_match.url_name == 'lista_amigos' %}active{% endif %}">
+                    <span class="material-icons-round">people</span>
+                    <span class="nav-text">Amigos</span>
+                </a>
+                <a href="{% url 'books:perfil_usuario' user.id %}" class="nav-link {% if request.resolver_match.kwargs.usuario_id == user.id %}active{% endif %}">
+                    {% if user.foto_perfil %}
+                        <img src="{{ user.foto_perfil.url }}" alt="Foto" class="nav-avatar">
+                    {% else %}
+                        <span class="material-icons-round avatar-placeholder">account_circle</span>
+                    {% endif %}
+                    <span class="nav-text">Perfil</span>
+                </a>
+                <a href="{% url 'logout' %}" class="nav-link logout-link">
+                    <span class="material-icons-round">logout</span>
+                </a>
+            </nav>
+        </div>
+    </header>
+    {% endif %}
+
+    <main class="{% if user.is_authenticated %}app-main{% else %}auth-main{% endif %}">
+        <div class="container">
+            {% if messages %}
+                <div class="messages">
+                    {% for message in messages %}
+                        <div class="alert alert-{{ message.tags }}">
+                            <span class="material-icons-round alert-icon">
+                                {% if message.tags == 'success' %}check_circle
+                                {% elif message.tags == 'error' %}error
+                                {% else %}info
+                                {% endif %}
+                            </span>
+                            <span class="alert-text">{{ message }}</span>
+                        </div>
+                    {% endfor %}
+                </div>
+            {% endif %}
+            
+            {% block content %}{% endblock %}
+        </div>
+    </main>
+
+    {% block extra_js %}{% endblock %}
 </body>
 </html>

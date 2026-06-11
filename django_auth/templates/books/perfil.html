@@ -1,0 +1,233 @@
+{% extends 'base.html' %}
+
+{% block title %}Perfil de {{ perfil.nome }} - Skoob{% endblock %}
+
+{% block content %}
+<div class="profile-grid">
+    <!-- Header/Hero Section -->
+    <div class="glass-card profile-hero-card">
+        <div class="profile-hero-content">
+            <div class="profile-hero-left">
+                {% if perfil.foto_perfil %}
+                    <img src="{{ perfil.foto_perfil.url }}" alt="{{ perfil.nome }}" class="profile-large-avatar">
+                {% else %}
+                    <span class="material-icons-round avatar-placeholder-lg">account_circle</span>
+                {% endif %}
+                
+                <div class="profile-info-text">
+                    <h1>{{ perfil.nome }}</h1>
+                    <p class="profile-join-date">Membro desde {{ perfil.data_cadastro|date:"F \d\e Y" }}</p>
+                    {% if perfil.bio %}
+                        <p class="profile-bio-text">"{{ perfil.bio }}"</p>
+                    {% else %}
+                        <p class="profile-bio-text text-muted">Sem biografia disponível.</p>
+                    {% endif %}
+                </div>
+            </div>
+            
+            <div class="profile-hero-right">
+                {% if perfil == user %}
+                    <a href="{% url 'books:editar_perfil' %}" class="btn btn-primary btn-icon-label">
+                        <span class="material-icons-round">edit</span>
+                        Editar Perfil
+                    </a>
+                {% else %}
+                    <!-- Friendship action buttons -->
+                    {% if sao_amigos %}
+                        <div class="friendship-status">
+                            <span class="material-icons-round text-success">people</span>
+                            <span>Vocês são amigos</span>
+                        </div>
+                    {% elif solicitacao_pendente == 'enviada' %}
+                        <button class="btn btn-outline" disabled>
+                            <span class="material-icons-round">schedule</span>
+                            Solicitação Enviada
+                        </button>
+                    {% elif solicitacao_pendente == 'recebida' %}
+                        <div class="friendship-request-actions">
+                            <p>Te enviou convite de amizade:</p>
+                            <!-- Find the amizade object to accept/recuse. We need to query or just pass amizade_id.
+                                 Since we can't easily find it here, let's write a small view/template helper or just use views that handle it.
+                                 Wait, in views.py, perfil_usuario gets the status but we can just use the solicitacao received flow.
+                                 Let's look at the solicitacoes received. We can accept/recuse!
+                                 Wait, let's make it simpler: we can just redirect to the list of friends where they can accept it,
+                                 or we can pass the specific amizade object to the context. Let's check perfil_usuario view in views.py.
+                                 Wait, let's look at views.py line 254-266:
+                                 amizade_sol = Amizade.objects.filter(solicitante=request.user, destinatario=perfil).first()
+                                 amizade_dest = Amizade.objects.filter(solicitante=perfil, destinatario=request.user).first()
+                                 Wait, amizade_dest is the one we received! So we can pass amizade_dest.id to the view!
+                                 Let's verify: yes, we can check if `solicitacao_pendente` handles this.
+                                 Wait, let's modify books/views.py to pass the amizade ID to the context! That way the accept/recuse buttons work directly!
+                                 Let's write books/views.py modification in a bit. For now, let's write the HTML with amizade_dest_id placeholder or logic.
+                            -->
+                            <div class="btn-group-row">
+                                <form action="{% url 'books:lista_amigos' %}" method="GET">
+                                    <button class="btn btn-primary-sm">Gerenciar Convites</button>
+                                </form>
+                            </div>
+                        </div>
+                    {% else %}
+                        <a href="{% url 'books:solicitar_amizade' perfil.id %}" class="btn btn-primary btn-icon-label">
+                            <span class="material-icons-round">person_add</span>
+                            Adicionar Amigo
+                        </a>
+                    {% endif %}
+                {% endif %}
+            </div>
+        </div>
+    </div>
+
+    <!-- Layout Columns: Left (Shelf Tabs) & Right (Friends & Stats) -->
+    <div class="profile-content-layout">
+        <!-- Shelf Tabs Area -->
+        <div class="profile-main-content">
+            <div class="glass-card shelf-card">
+                <div class="shelf-tabs">
+                    <button class="tab-link active" onclick="openShelfTab(event, 'tab-lendo')">
+                        Lendo ({{ lendo.count }})
+                    </button>
+                    <button class="tab-link" onclick="openShelfTab(event, 'tab-lido')">
+                        Lido ({{ lido.count }})
+                    </button>
+                    <button class="tab-link" onclick="openShelfTab(event, 'tab-quero-ler')">
+                        Quero Ler ({{ quero_ler.count }})
+                    </button>
+                    <button class="tab-link" onclick="openShelfTab(event, 'tab-abandonado')">
+                        Abandonado ({{ abandonado.count }})
+                    </button>
+                </div>
+
+                <!-- Tab Contents -->
+                <div id="tab-lendo" class="tab-content active">
+                    <div class="profile-books-grid">
+                        {% for item in lendo %}
+                            <div class="profile-book-item">
+                                <a href="{% url 'books:detalhe_livro' item.livro.id_livro %}">
+                                    {% if item.livro.capa %}
+                                        <img src="{{ item.livro.capa.url }}" alt="{{ item.livro.titulo }}" class="profile-book-cover">
+                                    {% else %}
+                                        <div class="cover-placeholder-md"><span class="material-icons-round">book</span></div>
+                                    {% endif %}
+                                </a>
+                                <div class="profile-book-info">
+                                    <a href="{% url 'books:detalhe_livro' item.livro.id_livro %}" class="profile-book-title">{{ item.livro.titulo }}</a>
+                                    <p class="profile-book-progress">Progresso: {{ item.percentual_lido }}%</p>
+                                </div>
+                            </div>
+                        {% empty %}
+                            <p class="empty-tab-state">Nenhum livro nesta categoria.</p>
+                        {% endfor %}
+                    </div>
+                </div>
+
+                <div id="tab-lido" class="tab-content">
+                    <div class="profile-books-grid">
+                        {% for item in lido %}
+                            <div class="profile-book-item">
+                                <a href="{% url 'books:detalhe_livro' item.livro.id_livro %}">
+                                    {% if item.livro.capa %}
+                                        <img src="{{ item.livro.capa.url }}" alt="{{ item.livro.titulo }}" class="profile-book-cover">
+                                    {% else %}
+                                        <div class="cover-placeholder-md"><span class="material-icons-round">book</span></div>
+                                    {% endif %}
+                                </a>
+                                <div class="profile-book-info">
+                                    <a href="{% url 'books:detalhe_livro' item.livro.id_livro %}" class="profile-book-title">{{ item.livro.titulo }}</a>
+                                    <p class="profile-book-progress">Leitura concluída!</p>
+                                </div>
+                            </div>
+                        {% empty %}
+                            <p class="empty-tab-state">Nenhum livro nesta categoria.</p>
+                        {% endfor %}
+                    </div>
+                </div>
+
+                <div id="tab-quero-ler" class="tab-content">
+                    <div class="profile-books-grid">
+                        {% for item in quero_ler %}
+                            <div class="profile-book-item">
+                                <a href="{% url 'books:detalhe_livro' item.livro.id_livro %}">
+                                    {% if item.livro.capa %}
+                                        <img src="{{ item.livro.capa.url }}" alt="{{ item.livro.titulo }}" class="profile-book-cover">
+                                    {% else %}
+                                        <div class="cover-placeholder-md"><span class="material-icons-round">book</span></div>
+                                    {% endif %}
+                                </a>
+                                <div class="profile-book-info">
+                                    <a href="{% url 'books:detalhe_livro' item.livro.id_livro %}" class="profile-book-title">{{ item.livro.titulo }}</a>
+                                    <p class="profile-book-progress">Planejado para ler</p>
+                                </div>
+                            </div>
+                        {% empty %}
+                            <p class="empty-tab-state">Nenhum livro nesta categoria.</p>
+                        {% endfor %}
+                    </div>
+                </div>
+
+                <div id="tab-abandonado" class="tab-content">
+                    <div class="profile-books-grid">
+                        {% for item in abandonado %}
+                            <div class="profile-book-item">
+                                <a href="{% url 'books:detalhe_livro' item.livro.id_livro %}">
+                                    {% if item.livro.capa %}
+                                        <img src="{{ item.livro.capa.url }}" alt="{{ item.livro.titulo }}" class="profile-book-cover">
+                                    {% else %}
+                                        <div class="cover-placeholder-md"><span class="material-icons-round">book</span></div>
+                                    {% endif %}
+                                </a>
+                                <div class="profile-book-info">
+                                    <a href="{% url 'books:detalhe_livro' item.livro.id_livro %}" class="profile-book-title">{{ item.livro.titulo }}</a>
+                                    <p class="profile-book-progress">Leitura interrompida</p>
+                                </div>
+                            </div>
+                        {% empty %}
+                            <p class="empty-tab-state">Nenhum livro nesta categoria.</p>
+                        {% endfor %}
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Friends List Sidebar -->
+        <div class="profile-sidebar">
+            <div class="glass-card profile-friends-card">
+                <h3>Amigos de {{ perfil.nome }} ({{ amigos.count }})</h3>
+                {% if amigos %}
+                    <div class="profile-friends-list">
+                        {% for amigo in amigos %}
+                            <a href="{% url 'books:perfil_usuario' amigo.id %}" class="profile-friend-item">
+                                {% if amigo.foto_perfil %}
+                                    <img src="{{ amigo.foto_perfil.url }}" alt="{{ amigo.nome }}" class="friend-mini-avatar">
+                                {% else %}
+                                    <span class="material-icons-round avatar-placeholder-sm">account_circle</span>
+                                {% endif %}
+                                <span>{{ amigo.nome }}</span>
+                            </a>
+                        {% endfor %}
+                    </div>
+                {% else %}
+                    <p class="empty-state">Nenhum amigo adicionado ainda.</p>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+function openShelfTab(evt, tabId) {
+    var i, tabcontent, tablinks;
+    tabcontent = document.getElementsByClassName("tab-content");
+    for (i = 0; i < tabcontent.length; i++) {
+        tabcontent[i].classList.remove("active");
+    }
+    tablinks = document.getElementsByClassName("tab-link");
+    for (i = 0; i < tablinks.length; i++) {
+        tablinks[i].classList.remove("active");
+    }
+    document.getElementById(tabId).classList.add("active");
+    evt.currentTarget.classList.add("active");
+}
+</script>
+{% endblock %}

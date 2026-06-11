@@ -1,0 +1,120 @@
+{% extends 'base.html' %}
+
+{% block title %}Meus Amigos - Skoob{% endblock %}
+
+{% block content %}
+<div class="amigos-page-grid">
+    <!-- Left Column: Current Friends & Pending Invites -->
+    <div class="amigos-main-col">
+        <!-- Pending Friend Requests Card -->
+        <div class="glass-card requests-card">
+            <h3>Solicitações de Amizade ({{ solicitacoes_recebidas.count }})</h3>
+            {% if solicitacoes_recebidas %}
+                <div class="requests-list">
+                    {% for req in solicitacoes_recebidas %}
+                        <div class="request-item">
+                            <a href="{% url 'books:perfil_usuario' req.solicitante.id %}" class="request-user">
+                                {% if req.solicitante.foto_perfil %}
+                                    <img src="{{ req.solicitante.foto_perfil.url }}" alt="{{ req.solicitante.nome }}" class="avatar-mini">
+                                {% else %}
+                                    <span class="material-icons-round avatar-placeholder-sm">account_circle</span>
+                                {% endif %}
+                                <div class="request-user-info">
+                                    <strong>{{ req.solicitante.nome }}</strong>
+                                    <span class="request-email">{{ req.solicitante.email }}</span>
+                                </div>
+                            </a>
+                            <div class="request-actions">
+                                <a href="{% url 'books:aceitar_amizade' req.id_amizade %}" class="btn-sm btn-primary-sm btn-icon-label">
+                                    <span class="material-icons-round">check</span>
+                                    Aceitar
+                                </a>
+                                <a href="{% url 'books:recusar_amizade' req.id_amizade %}" class="btn-sm btn-outline-sm btn-icon-label">
+                                    <span class="material-icons-round">close</span>
+                                    Recusar
+                                </a>
+                            </div>
+                        </div>
+                    {% endfor %}
+                </div>
+            {% else %}
+                <p class="empty-state">Nenhuma solicitação pendente.</p>
+            {% endif %}
+        </div>
+
+        <!-- Friends List Card -->
+        <div class="glass-card friends-card-full">
+            <h3>Seus Amigos ({{ amigos.count }})</h3>
+            {% if amigos %}
+                <div class="friends-grid-full">
+                    {% for amigo in amigos %}
+                        <div class="friend-card-item">
+                            <a href="{% url 'books:perfil_usuario' amigo.id %}" class="friend-card-link">
+                                {% if amigo.foto_perfil %}
+                                    <img src="{{ amigo.foto_perfil.url }}" alt="{{ amigo.nome }}" class="friend-card-avatar">
+                                {% else %}
+                                    <span class="material-icons-round avatar-placeholder-lg">account_circle</span>
+                                {% endif %}
+                                <div class="friend-card-details">
+                                    <h4>{{ amigo.nome }}</h4>
+                                    <p>{{ amigo.email }}</p>
+                                </div>
+                            </a>
+                        </div>
+                    {% endfor %}
+                </div>
+            {% else %}
+                <p class="empty-state">Você ainda não tem amigos adicionados. Use a busca ao lado para encontrar leitores!</p>
+            {% endif %}
+        </div>
+    </div>
+
+    <!-- Right Column: Add Friends / Search Users -->
+    <div class="amigos-side-col">
+        <div class="glass-card search-users-card">
+            <h3>Encontrar Pessoas</h3>
+            <p class="search-helper-text">Busque por outros leitores pelo nome ou e-mail.</p>
+            
+            <form action="{% url 'books:lista_amigos' %}" method="GET" class="user-search-form">
+                <input type="text" name="search_user" placeholder="Buscar por nome ou e-mail..." value="{{ search_query }}">
+                <button type="submit" class="btn btn-primary btn-icon-label">
+                    <span class="material-icons-round">search</span>
+                    Buscar
+                </button>
+            </form>
+            
+            {% if search_query %}
+                <div class="search-users-results">
+                    <h4>Resultados da busca</h4>
+                    {% if outros_usuarios %}
+                        <div class="results-list">
+                            {% for outro in outros_usuarios %}
+                                <div class="search-user-item">
+                                    <a href="{% url 'books:perfil_usuario' outro.id %}" class="search-user-info-row">
+                                        {% if outro.foto_perfil %}
+                                            <img src="{{ outro.foto_perfil.url }}" alt="{{ outro.nome }}" class="avatar-mini">
+                                        {% else %}
+                                            <span class="material-icons-round avatar-placeholder-sm">account_circle</span>
+                                        {% endif %}
+                                        <div class="search-user-info-text">
+                                            <strong>{{ outro.nome }}</strong>
+                                            <span>{{ outro.email }}</span>
+                                        </div>
+                                    </a>
+                                    <div class="search-user-action">
+                                        <!-- Note: It's best to let users click into their profile to request friendship 
+                                             or view connection status, as it ensures proper validation checks. -->
+                                        <a href="{% url 'books:perfil_usuario' outro.id %}" class="btn-sm btn-outline-sm">Ver Perfil</a>
+                                    </div>
+                                </div>
+                            {% endfor %}
+                        </div>
+                    {% else %}
+                        <p class="empty-state">Nenhum leitor encontrado.</p>
+                    {% endif %}
+                </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endblock %}

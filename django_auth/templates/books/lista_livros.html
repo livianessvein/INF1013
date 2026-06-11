@@ -1,0 +1,73 @@
+{% extends 'base.html' %}
+
+{% block title %}Explorar Livros - Skoob{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <div class="header-titles">
+        <h2>Explorar Livros</h2>
+        <p>Encontre novos títulos ou registre suas leituras</p>
+    </div>
+    <a href="{% url 'books:criar_livro' %}" class="btn-primary-sm btn-icon-label">
+        <span class="material-icons-round">add</span>
+        Cadastrar Livro
+    </a>
+</div>
+
+{% if query %}
+    <p class="search-result-info">Resultados para sua busca: <strong>"{{ query }}"</strong></p>
+{% endif %}
+
+<div class="books-grid">
+    {% for livro in livros %}
+        <div class="glass-card book-card">
+            <div class="book-card-cover">
+                {% if livro.capa %}
+                    <img src="{{ livro.capa.url }}" alt="{{ livro.titulo }}">
+                {% else %}
+                    <div class="cover-placeholder-lg">
+                        <span class="material-icons-round">book</span>
+                        <p>Sem capa</p>
+                    </div>
+                {% endif %}
+            </div>
+            
+            <div class="book-card-info">
+                <h3 class="book-title">{{ livro.titulo }}</h3>
+                <p class="book-authors">
+                    {% for autor in livro.autores.all %}
+                        {{ autor.nome }}{% if not forloop.last %}, {% endif %}
+                    {% endfor %}
+                </p>
+                
+                <div class="book-rating-badge">
+                    <span class="material-icons-round rating-star">star</span>
+                    <span>
+                        {% if livro.media_nota %}
+                            {{ livro.media_nota }}/5.0
+                        {% else %}
+                            Sem nota
+                        {% endif %}
+                    </span>
+                </div>
+                
+                <a href="{% url 'books:detalhe_livro' livro.id_livro %}" class="btn btn-outline btn-card-action">
+                    Ver Detalhes
+                </a>
+            </div>
+        </div>
+    {% empty %}
+        <div class="glass-card empty-state-full">
+            <span class="material-icons-round empty-icon">menu_book</span>
+            <h3>Nenhum livro encontrado!</h3>
+            {% if query %}
+                <p>Nenhum resultado corresponde à sua busca. Tente buscar por outro termo.</p>
+                <a href="{% url 'books:lista_livros' %}" class="btn btn-primary">Limpar Busca</a>
+            {% else %}
+                <p>Ainda não há livros cadastrados no sistema. Seja o primeiro a cadastrar um livro!</p>
+                <a href="{% url 'books:criar_livro' %}" class="btn btn-primary">Cadastrar Livro</a>
+            {% endif %}
+        </div>
+    {% endfor %}
+</div>
+{% endblock %}

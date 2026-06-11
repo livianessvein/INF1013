@@ -1,0 +1,30 @@
+{% extends 'base.html' %}
+
+{% block title %}Alterar Status de Leitura - Skoob{% endblock %}
+
+{% block content %}
+<div class="glass-card confirmation-card">
+    <div class="card-header">
+        <span class="material-icons-round alert-warning-icon">help_outline</span>
+        <h2>Alterar Status de Leitura?</h2>
+        <p>O livro <strong>{{ livro.titulo }}</strong> já está na sua estante.</p>
+    </div>
+
+    <div class="confirmation-details">
+        <p>Status atual: <strong class="status-badge status-{{ status_atual }}">{{ status_atual|capfirst }}</strong></p>
+        <p>Deseja alterar para: <strong class="status-badge status-{{ status_novo }}">{{ status_novo|capfirst }}</strong>?</p>
+    </div>
+
+    <form action="{% url 'books:adicionar_estante' livro.id_livro %}" method="POST" class="confirmation-form">
+        {% csrf_token %}
+        <input type="hidden" name="status" value="{{ status_novo }}">
+        <input type="hidden" name="pagina_atual" value="{{ pagina_atual }}">
+        <input type="hidden" name="confirmado" value="1">
+        
+        <div class="confirmation-actions">
+            <button type="submit" class="btn btn-primary">Sim, Alterar</button>
+            <a href="{% url 'books:detalhe_livro' livro.id_livro %}" class="btn btn-outline">Cancelar</a>
+        </div>
+    </form>
+</div>
+{% endblock %}

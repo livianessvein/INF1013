@@ -1,0 +1,38 @@
+{% extends 'base.html' %}
+
+{% block title %}Editar/Substituir Resenha - Skoob{% endblock %}
+
+{% block content %}
+<div class="glass-card confirmation-card">
+    <div class="card-header">
+        <span class="material-icons-round alert-warning-icon">help_outline</span>
+        <h2>Substituir Resenha Existente?</h2>
+        <p>Você já escreveu uma resenha para o livro <strong>{{ livro.titulo }}</strong>.</p>
+    </div>
+
+    <div class="confirmation-details">
+        <p>Deseja substituir sua resenha anterior pela nova resenha?</p>
+        <div class="new-review-preview">
+            <strong>Nova Resenha:</strong>
+            <p>{{ texto_novo }}</p>
+            {% if spoiler_novo %}
+                <span class="status-badge status-abandonado">Contém Spoiler</span>
+            {% endif %}
+        </div>
+    </div>
+
+    <form action="{% url 'books:escrever_resenha' livro.id_livro %}" method="POST" class="confirmation-form">
+        {% csrf_token %}
+        <input type="hidden" name="texto" value="{{ texto_novo }}">
+        {% if spoiler_novo %}
+            <input type="hidden" name="spoiler" value="on">
+        {% endif %}
+        <input type="hidden" name="confirmado" value="1">
+        
+        <div class="confirmation-actions">
+            <button type="submit" class="btn btn-primary">Sim, Substituir</button>
+            <a href="{% url 'books:detalhe_livro' livro.id_livro %}" class="btn btn-outline">Cancelar</a>
+        </div>
+    </form>
+</div>
+{% endblock %}

@@ -1,0 +1,42 @@
+{% extends 'base.html' %}
+
+{% block title %}Cadastrar Livro - Skoob{% endblock %}
+
+{% block content %}
+<div class="glass-card form-card">
+    <div class="card-header">
+        <span class="material-icons-round form-header-icon">add_to_photos</span>
+        <h2>Cadastrar Novo Livro</h2>
+        <p>Preencha os dados abaixo para adicionar um livro ao acervo</p>
+    </div>
+
+    <form method="POST" enctype="multipart/form-data" class="premium-form">
+        {% csrf_token %}
+        
+        {% if form.non_field_errors %}
+            <div class="global-error">
+                {% for error in form.non_field_errors %}
+                    <p class="form-error">{{ error }}</p>
+                {% endfor %}
+            </div>
+        {% endif %}
+
+        {% for field in form %}
+            <div class="form-group">
+                <label for="{{ field.id_for_label }}">{{ field.label }}</label>
+                {{ field }}
+                {% if field.errors %}
+                    {% for error in field.errors %}
+                        <span class="form-error">{{ error }}</span>
+                    {% endfor %}
+                {% endif %}
+            </div>
+        {% endfor %}
+
+        <div class="form-actions">
+            <button type="submit" class="btn btn-primary">Salvar Livro</button>
+            <a href="{% url 'books:lista_livros' %}" class="btn btn-outline">Cancelar</a>
+        </div>
+    </form>
+</div>
+{% endblock %}

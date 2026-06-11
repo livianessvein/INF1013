@@ -1,0 +1,29 @@
+{% extends 'base.html' %}
+
+{% block title %}Substituir Nota - Skoob{% endblock %}
+
+{% block content %}
+<div class="glass-card confirmation-card">
+    <div class="card-header">
+        <span class="material-icons-round alert-warning-icon">help_outline</span>
+        <h2>Substituir Nota Anterior?</h2>
+        <p>Você já avaliou o livro <strong>{{ livro.titulo }}</strong>.</p>
+    </div>
+
+    <div class="confirmation-details">
+        <p>Nota atual: <strong>{{ nota_atual }}/5</strong></p>
+        <p>Nova nota proposta: <strong>{{ nota_nova }}/5</strong></p>
+    </div>
+
+    <form action="{% url 'books:avaliar_livro' livro.id_livro %}" method="POST" class="confirmation-form">
+        {% csrf_token %}
+        <input type="hidden" name="nota" value="{{ nota_nova }}">
+        <input type="hidden" name="confirmado" value="1">
+        
+        <div class="confirmation-actions">
+            <button type="submit" class="btn btn-primary">Sim, Substituir</button>
+            <a href="{% url 'books:detalhe_livro' livro.id_livro %}" class="btn btn-outline">Cancelar</a>
+        </div>
+    </form>
+</div>
+{% endblock %}

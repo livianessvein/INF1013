@@ -1,33 +1,183 @@
 {% extends 'base.html' %}
-{% block title %}Dashboard{% endblock %}
+
+{% block title %}Dashboard - Skoob{% endblock %}
 
 {% block content %}
-<div class="card dashboard-card">
-    <div class="card-header">
-        <div class="logo">✅</div>
-        <h1>Olá, {{ usuario.nome }}!</h1>
-        <p>Você está logado com sucesso</p>
-    </div>
+<div class="dashboard-grid">
+    <!-- Left Sidebar: User Stats & Active Readings -->
+    <aside class="dashboard-sidebar">
+        <!-- Profile Info Card -->
+        <div class="glass-card profile-summary-card">
+            <div class="profile-header">
+                {% if usuario.foto_perfil %}
+                    <img src="{{ usuario.foto_perfil.url }}" alt="{{ usuario.nome }}" class="profile-avatar">
+                {% else %}
+                    <span class="material-icons-round avatar-placeholder">account_circle</span>
+                {% endif %}
+                <h2>{{ usuario.nome }}</h2>
+                {% if usuario.bio %}
+                    <p class="profile-bio">{{ usuario.bio }}</p>
+                {% else %}
+                    <p class="profile-bio text-muted">Nenhuma biografia adicionada.</p>
+                {% endif %}
+                <a href="{% url 'books:editar_perfil' %}" class="btn-sm btn-outline-sm">Editar Perfil</a>
+            </div>
+            
+            <div class="shelf-stats-grid">
+                <div class="stat-box">
+                    <span class="stat-num">{{ stats.lendo }}</span>
+                    <span class="stat-label">Lendo</span>
+                </div>
+                <div class="stat-box">
+                    <span class="stat-num">{{ stats.lido }}</span>
+                    <span class="stat-label">Lidos</span>
+                </div>
+                <div class="stat-box">
+                    <span class="stat-num">{{ stats.quero_ler }}</span>
+                    <span class="stat-label">Quero Ler</span>
+                </div>
+                <div class="stat-box">
+                    <span class="stat-num">{{ stats.abandonado }}</span>
+                    <span class="stat-label">Abandonados</span>
+                </div>
+            </div>
+        </div>
 
-    <div class="user-info">
-        <div class="info-row">
-            <span class="info-label">ID</span>
-            <span class="info-value">#{{ usuario.id }}</span>
+        <!-- Currently Reading Card -->
+        <div class="glass-card currently-reading-card">
+            <h3>Lendo Atualmente</h3>
+            {% if lendo %}
+                <div class="reading-list">
+                    {% for item in lendo %}
+                        <div class="reading-item">
+                            <div class="reading-book-cover">
+                                {% if item.livro.capa %}
+                                    <img src="{{ item.livro.capa.url }}" alt="{{ item.livro.titulo }}">
+                                {% else %}
+                                    <div class="cover-placeholder-sm"><span class="material-icons-round">book</span></div>
+                                {% endif %}
+                            </div>
+                            <div class="reading-details">
+                                <a href="{% url 'books:detalhe_livro' item.livro.id_livro %}" class="reading-title">{{ item.livro.titulo }}</a>
+                                <p class="reading-page-info">Pág. {{ item.pagina_atual }} de {{ item.livro.num_paginas }}</p>
+                                
+                                <div class="progress-bar-container">
+                                    <div class="progress-bar" style="width: {{ item.percentual_lido }}%;"></div>
+                                </div>
+                                <span class="progress-percent">{{ item.percentual_lido }}% concluído</span>
+                                
+                                <form action="{% url 'books:atualizar_progresso' item.livro.id_livro %}" method="POST" class="inline-progress-form">
+                                    {% csrf_token %}
+                                    <input type="number" name="pagina_atual" value="{{ item.pagina_atual }}" min="0" max="{{ item.livro.num_paginas }}">
+                                    <button type="submit" class="btn-icon-sm"><span class="material-icons-round">update</span></button>
+                                </form>
+                            </div>
+                        </div>
+                    {% endfor %}
+                </div>
+            {% else %}
+                <p class="empty-state">Você não está lendo nenhum livro no momento. Explore livros e adicione-os à sua estante!</p>
+                <a href="{% url 'books:lista_livros' %}" class="btn btn-primary-sm">Explorar Livros</a>
+            {% endif %}
         </div>
-        <div class="info-row">
-            <span class="info-label">Nome</span>
-            <span class="info-value">{{ usuario.nome }}</span>
-        </div>
-        <div class="info-row">
-            <span class="info-label">E-mail</span>
-            <span class="info-value">{{ usuario.email }}</span>
-        </div>
-        <div class="info-row">
-            <span class="info-label">Membro desde</span>
-            <span class="info-value">{{ usuario.data_cadastro|date:"d/m/Y \à\s H:i" }}</span>
-        </div>
-    </div>
+    </aside>
 
-    <a href="{% url 'logout' %}" class="btn btn-outline">Sair da conta</a>
+    <!-- Main Content: Social Feed -->
+    <section class="feed-content">
+        <div class="feed-header">
+            <h2>Feed Social</h2>
+            <p>O que seus amigos andam lendo e resenhando</p>
+        </div>
+
+        {% if feed_resenhas %}
+            <div class="feed-list">
+                {% for resenha in feed_resenhas %}
+                    <article class="feed-card glass-card">
+                        <header class="feed-card-header">
+                            <a href="{% url 'books:perfil_usuario' resenha.usuario.id %}" class="feed-user-link">
+                                {% if resenha.usuario.foto_perfil %}
+                                    <img src="{{ resenha.usuario.foto_perfil.url }}" alt="{{ resenha.usuario.nome }}" class="feed-avatar">
+                                {% else %}
+                                    <span class="material-icons-round avatar-placeholder-sm">account_circle</span>
+                                {% endif %}
+                                <div class="feed-user-details">
+                                    <span class="feed-username">{{ resenha.usuario.nome }}</span>
+                                    <span class="feed-time">{{ resenha.data_resenha|timesince }} atrás</span>
+                                </div>
+                            </a>
+                        </header>
+                        
+                        <div class="feed-book-snippet">
+                            <div class="snippet-cover">
+                                {% if resenha.livro.capa %}
+                                    <img src="{{ resenha.livro.capa.url }}" alt="{{ resenha.livro.titulo }}">
+                                {% else %}
+                                    <div class="cover-placeholder-sm"><span class="material-icons-round">book</span></div>
+                                {% endif %}
+                            </div>
+                            <div class="snippet-info">
+                                <a href="{% url 'books:detalhe_livro' resenha.livro.id_livro %}" class="snippet-title">{{ resenha.livro.titulo }}</a>
+                                <p class="snippet-authors">por {% for autor in resenha.livro.autores.all %}{{ autor.nome }}{% if not forloop.last %}, {% endif %}{% endfor %}</p>
+                            </div>
+                        </div>
+                        
+                        <div class="feed-review-body">
+                            {% if resenha.spoiler %}
+                                <div class="spoiler-container" id="spoiler-{{ resenha.id_resenha }}">
+                                    <p class="spoiler-alert"><span class="material-icons-round">warning</span> Esta resenha contém spoilers!</p>
+                                    <button onclick="revealSpoiler('{{ resenha.id_resenha }}')" class="btn btn-outline-sm inline-btn">Revelar Resenha</button>
+                                </div>
+                                <div class="spoiler-content hidden" id="content-{{ resenha.id_resenha }}">
+                                    <p class="review-text">{{ resenha.texto }}</p>
+                                </div>
+                            {% else %}
+                                <p class="review-text">{{ resenha.texto }}</p>
+                            {% endif %}
+                        </div>
+
+                        <!-- Review Comments Section -->
+                        <div class="review-comments-section">
+                            <h4>Comentários</h4>
+                            <div class="comments-list">
+                                {% for comentario in resenha.comentarios.all %}
+                                    <div class="comment-item">
+                                        <a href="{% url 'books:perfil_usuario' comentario.usuario.id %}" class="comment-user">
+                                            <strong>{{ comentario.usuario.nome }}</strong>
+                                        </a>
+                                        <p class="comment-text">{{ comentario.texto }}</p>
+                                        <span class="comment-time">{{ comentario.data_comentario|timesince }} atrás</span>
+                                    </div>
+                                {% empty %}
+                                    <p class="empty-comments">Nenhum comentário. Seja o primeiro a comentar!</p>
+                                {% endfor %}
+                            </div>
+
+                            <form action="{% url 'books:comentar_resenha' resenha.id_resenha %}" method="POST" class="comment-form">
+                                {% csrf_token %}
+                                <input type="text" name="texto" placeholder="Adicionar comentário..." required>
+                                <button type="submit" class="btn-comment"><span class="material-icons-round">send</span></button>
+                            </form>
+                        </div>
+                    </article>
+                {% endfor %}
+            </div>
+        {% else %}
+            <div class="glass-card empty-feed">
+                <span class="material-icons-round empty-icon">forum</span>
+                <h3>Nada no feed ainda!</h3>
+                <p>Adicione amigos e comece a seguir suas resenhas de livros.</p>
+                <a href="{% url 'books:lista_amigos' %}" class="btn btn-primary">Encontrar Amigos</a>
+            </div>
+        {% endif %}
+    </section>
 </div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+function revealSpoiler(id) {
+    document.getElementById('spoiler-' + id).style.display = 'none';
+    document.getElementById('content-' + id).classList.remove('hidden');
+}
+</script>
 {% endblock %}

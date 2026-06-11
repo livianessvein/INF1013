@@ -24,6 +24,8 @@ class Usuario(AbstractBaseUser, PermissionsMixin):
     id = models.AutoField(primary_key=True)
     email = models.EmailField(unique=True, verbose_name='E-mail')
     nome = models.CharField(max_length=150, verbose_name='Nome completo')
+    foto_perfil = models.ImageField(upload_to='perfil/', null=True, blank=True, verbose_name='Foto de perfil')
+    bio = models.TextField(max_length=500, blank=True, null=True, verbose_name='Bio')
     data_cadastro = models.DateTimeField(auto_now_add=True, verbose_name='Data de cadastro')
     is_active = models.BooleanField(default=True)
     is_staff = models.BooleanField(default=False)

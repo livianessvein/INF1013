@@ -1,0 +1,230 @@
+{% extends 'base.html' %}
+
+{% block title %}{{ livro.titulo }} - Skoob{% endblock %}
+
+{% block content %}
+<div class="book-detail-grid">
+    <!-- Left Column: Cover & Actions -->
+    <div class="book-detail-aside">
+        <div class="glass-card book-detail-cover-card">
+            <div class="detail-cover-wrapper">
+                {% if livro.capa %}
+                    <img src="{{ livro.capa.url }}" alt="{{ livro.titulo }}" class="detail-cover">
+                {% else %}
+                    <div class="cover-placeholder-xl">
+                        <span class="material-icons-round">book</span>
+                        <p>Sem capa</p>
+                    </div>
+                {% endif %}
+            </div>
+            
+            <div class="detail-rating-summary">
+                <div class="stars-row">
+                    <span class="material-icons-round star-icon">star</span>
+                    <span class="rating-value">{{ media_nota|default:"Sem notas" }}</span>
+                </div>
+                <span class="rating-count">{{ livro.avaliacoes.count }} avaliações</span>
+            </div>
+        </div>
+
+        <!-- Shelf Control Card -->
+        <div class="glass-card shelf-control-card">
+            {% if estante_entry %}
+                <div class="shelf-status-header">
+                    <span class="material-icons-round text-success">library_add_check</span>
+                    <h3>Na sua Estante</h3>
+                </div>
+                <p class="status-badge status-{{ estante_entry.status }}">{{ estante_entry.get_status_display }}</p>
+                
+                <!-- Progress update -->
+                <div class="shelf-progress-section">
+                    <h4>Progresso de Leitura</h4>
+                    <p class="progress-details">Pág. {{ estante_entry.pagina_atual }} de {{ livro.num_paginas }} ({{ estante_entry.percentual_lido }}%)</p>
+                    <div class="progress-bar-container">
+                        <div class="progress-bar" style="width: {{ estante_entry.percentual_lido }}%;"></div>
+                    </div>
+                    
+                    <form action="{% url 'books:atualizar_progresso' livro.id_livro %}" method="POST" class="progress-update-form">
+                        {% csrf_token %}
+                        <input type="number" name="pagina_atual" value="{{ estante_entry.pagina_atual }}" min="0" max="{{ livro.num_paginas }}" class="form-input-sm">
+                        <button type="submit" class="btn btn-primary-sm">Atualizar Página</button>
+                    </form>
+                </div>
+
+                <!-- Rating -->
+                <div class="shelf-rating-section">
+                    <h4>Sua Avaliação</h4>
+                    {% if avaliacao_entry %}
+                        <div class="user-rating-stars">
+                            <span class="material-icons-round star-gold">star</span>
+                            <span class="user-rating-val">{{ avaliacao_entry.nota }}/5</span>
+                        </div>
+                    {% endif %}
+                    
+                    <form action="{% url 'books:avaliar_livro' livro.id_livro %}" method="POST" class="rating-form">
+                        {% csrf_token %}
+                        <div class="form-group-inline">
+                            <label for="id_nota">Nova Nota:</label>
+                            <select name="nota" id="id_nota" class="select-input-sm">
+                                {% for i in "012345" %}
+                                    <option value="{{ i }}" {% if avaliacao_entry and avaliacao_entry.nota|stringformat:"i" == i %}selected{% endif %}>{{ i }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        <button type="submit" class="btn btn-outline-sm btn-full">Avaliar</button>
+                    </form>
+                </div>
+            {% else %}
+                <div class="shelf-status-header">
+                    <span class="material-icons-round text-muted">library_add</span>
+                    <h3>Adicionar à Estante</h3>
+                </div>
+                
+                <form action="{% url 'books:adicionar_estante' livro.id_livro %}" method="POST" class="add-shelf-form">
+                    {% csrf_token %}
+                    <div class="form-group">
+                        <label for="id_status">Escolha o status:</label>
+                        <select name="status" id="id_status" class="select-input">
+                            <option value="quero ler">Quero Ler</option>
+                            <option value="lendo">Lendo</option>
+                            <option value="lido">Lido</option>
+                            <option value="abandonado">Abandonado</option>
+                        </select>
+                    </div>
+                    <button type="submit" class="btn btn-primary">Adicionar</button>
+                </form>
+            {% endif %}
+        </div>
+    </div>
+
+    <!-- Right Column: Details, Reviews, Comments -->
+    <div class="book-detail-main">
+        <!-- Book Details Metadata Card -->
+        <div class="glass-card book-info-card">
+            <h1>{{ livro.titulo }}</h1>
+            <p class="book-detail-authors">
+                por {% for autor in livro.autores.all %}<a href="{% url 'books:lista_livros' %}?q={{ autor.nome }}">{{ autor.nome }}</a>{% if not forloop.last %}, {% endif %}{% endfor %}
+            </p>
+            
+            <div class="book-metadata-grid">
+                <div class="meta-item">
+                    <span class="meta-label">Editora</span>
+                    <span class="meta-value">{{ livro.editora.nome }}</span>
+                </div>
+                <div class="meta-item">
+                    <span class="meta-label">Ano</span>
+                    <span class="meta-value">{{ livro.ano_publicacao }}</span>
+                </div>
+                <div class="meta-item">
+                    <span class="meta-label">Páginas</span>
+                    <span class="meta-value">{{ livro.num_paginas }}</span>
+                </div>
+                <div class="meta-item">
+                    <span class="meta-label">ISBN</span>
+                    <span class="meta-value">{{ livro.isbn }}</span>
+                </div>
+            </div>
+
+            <div class="book-synopsis-section">
+                <h3>Sinopse</h3>
+                <p>{{ livro.sinopse }}</p>
+            </div>
+        </div>
+
+        <!-- Write Review Section -->
+        <div class="glass-card write-review-card">
+            <h3>{% if resenha_entry %}Editar sua Resenha{% else %}Escrever Resenha{% endif %}</h3>
+            <form action="{% url 'books:escrever_resenha' livro.id_livro %}" method="POST" class="review-editor-form">
+                {% csrf_token %}
+                <div class="form-group">
+                    <textarea name="texto" rows="5" placeholder="Escreva sua resenha sobre o livro..." required>{% if resenha_entry %}{{ resenha_entry.texto }}{% endif %}</textarea>
+                </div>
+                <div class="form-group checkbox-group">
+                    <input type="checkbox" name="spoiler" id="id_spoiler" {% if resenha_entry and resenha_entry.spoiler %}checked{% endif %}>
+                    <label for="id_spoiler">Esta resenha contém spoilers (revelações sobre o enredo)</label>
+                </div>
+                <button type="submit" class="btn btn-primary-sm">Publicar Resenha</button>
+            </form>
+        </div>
+
+        <!-- Reviews Feed -->
+        <div class="book-reviews-section">
+            <h2>Resenhas de Leitores ({{ resenhas.count }})</h2>
+            {% if resenhas %}
+                <div class="reviews-list">
+                    {% for resenha in resenhas %}
+                        <article class="review-card glass-card">
+                            <header class="review-card-header">
+                                <a href="{% url 'books:perfil_usuario' resenha.usuario.id %}" class="review-user-link">
+                                    {% if resenha.usuario.foto_perfil %}
+                                        <img src="{{ resenha.usuario.foto_perfil.url }}" alt="{{ resenha.usuario.nome }}" class="review-avatar">
+                                    {% else %}
+                                        <span class="material-icons-round avatar-placeholder-sm">account_circle</span>
+                                    {% endif %}
+                                    <div class="review-user-details">
+                                        <span class="review-username">{{ resenha.usuario.nome }}</span>
+                                        <span class="review-time">{{ resenha.data_resenha|date:"d/m/Y H:i" }}</span>
+                                    </div>
+                                </a>
+                            </header>
+
+                            <div class="review-body">
+                                {% if resenha.spoiler %}
+                                    <div class="spoiler-container" id="detail-spoiler-{{ resenha.id_resenha }}">
+                                        <p class="spoiler-alert"><span class="material-icons-round">warning</span> Esta resenha contém spoilers!</p>
+                                        <button onclick="revealDetailSpoiler('{{ resenha.id_resenha }}')" class="btn btn-outline-sm inline-btn">Revelar Resenha</button>
+                                    </div>
+                                    <div class="spoiler-content hidden" id="detail-content-{{ resenha.id_resenha }}">
+                                        <p class="review-text-content">{{ resenha.texto }}</p>
+                                    </div>
+                                {% else %}
+                                    <p class="review-text-content">{{ resenha.texto }}</p>
+                                {% endif %}
+                            </div>
+
+                            <!-- Comments Section -->
+                            <div class="review-comments-section">
+                                <h5>Comentários</h5>
+                                <div class="comments-list">
+                                    {% for comentario in resenha.comentarios.all %}
+                                        <div class="comment-item">
+                                            <a href="{% url 'books:perfil_usuario' comentario.usuario.id %}" class="comment-user">
+                                                <strong>{{ comentario.usuario.nome }}</strong>
+                                            </a>
+                                            <p class="comment-text">{{ comentario.texto }}</p>
+                                            <span class="comment-time">{{ comentario.data_comentario|timesince }} atrás</span>
+                                        </div>
+                                    {% empty %}
+                                        <p class="empty-comments">Nenhum comentário. Seja o primeiro a comentar!</p>
+                                    {% endfor %}
+                                </div>
+
+                                <form action="{% url 'books:comentar_resenha' resenha.id_resenha %}" method="POST" class="comment-form">
+                                    {% csrf_token %}
+                                    <input type="text" name="texto" placeholder="Comentar..." required>
+                                    <button type="submit" class="btn-comment"><span class="material-icons-round">send</span></button>
+                                </form>
+                            </div>
+                        </article>
+                    {% endfor %}
+                </div>
+            {% else %}
+                <div class="glass-card empty-state-full">
+                    <span class="material-icons-round empty-icon">rate_review</span>
+                    <h3>Ainda não há resenhas para este livro!</h3>
+                    <p>Compartilhe suas ideias sobre a obra sendo o primeiro a escrever uma resenha.</p>
+                </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+function revealDetailSpoiler(id) {
+    document.getElementById('detail-spoiler-' + id).style.display = 'none';
+    document.getElementById('detail-content-' + id).classList.remove('hidden');
+}
+</script>
+{% endblock %}

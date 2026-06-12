@@ -29,6 +29,15 @@ class EstanteForm(forms.ModelForm):
             'pagina_atual': forms.NumberInput(attrs={'min': 0, 'placeholder': 'Página atual'}),
         }
 
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.fields['pagina_atual'].required = False
+
+    def clean_pagina_atual(self):
+        pagina = self.cleaned_data.get('pagina_atual')
+        return pagina if pagina is not None else 0
+
+
 
 class AvaliacaoForm(forms.ModelForm):
     class Meta:

@@ -1,6 +1,6 @@
 from django.db import models
 from django.conf import settings
-from django.core.exceptions import ValidationError
+from django.core.exceptions import ValidationError, ObjectDoesNotExist
 from django.core.validators import MinValueValidator, MaxValueValidator
 
 
@@ -94,9 +94,14 @@ class Estante(models.Model):
         unique_together = ("usuario", "livro")
 
     def clean(self):
-        if self.pagina_atual > self.livro.num_paginas:
+        try:
+            livro = self.livro
+        except ObjectDoesNotExist:
+            livro = None
+
+        if livro and self.pagina_atual > livro.num_paginas:
             raise ValidationError(
-                {"pagina_atual": f"A página atual não pode ser maior que o total de páginas do livro ({self.livro.num_paginas})."}
+                {"pagina_atual": f"A página atual não pode ser maior que o total de páginas do livro ({livro.num_paginas})."}
             )
 
     def save(self, *args, **kwargs):

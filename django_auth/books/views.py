@@ -101,6 +101,10 @@ def adicionar_estante(request, livro_id):
             entry.save()
             messages.success(request, f'Estante atualizada para "{livro.titulo}"!')
             return redirect('books:detalhe_livro', livro_id=livro.id_livro)
+        else:
+            for field, errors in form.errors.items():
+                for error in errors:
+                    messages.error(request, f"Erro no campo {field}: {error}")
     return redirect('books:detalhe_livro', livro_id=livro_id)
 
 

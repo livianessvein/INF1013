@@ -7,14 +7,14 @@ def run():
     os.chdir(os.path.dirname(os.path.abspath(__file__)))
     
     print("Running makemigrations...")
-    res1 = subprocess.run([r"venv\Scripts\python.exe", "manage.py", "makemigrations"], capture_output=True, text=True)
+    res1 = subprocess.run([sys.executable, "manage.py", "makemigrations"], capture_output=True, text=True)
     print("STDOUT:")
     print(res1.stdout)
     print("STDERR:")
     print(res1.stderr)
     
     print("Running migrate...")
-    res2 = subprocess.run([r"venv\Scripts\python.exe", "manage.py", "migrate"], capture_output=True, text=True)
+    res2 = subprocess.run([sys.executable, "manage.py", "migrate"], capture_output=True, text=True)
     print("STDOUT:")
     print(res2.stdout)
     print("STDERR:")
